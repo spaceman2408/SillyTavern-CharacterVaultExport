@@ -268,10 +268,7 @@ function addExportOption() {
 
     // Add the CharacterVault option
     const cvOption = $(`
-        <div class="export_format list-group-item" data-format="${EXPORT_FORMAT_CV}">
-            <i class="fa-solid fa-box-archive"></i> CharacterVault
-        </div>
-    `);
+        <div class="export_format list-group-item" data-format="${EXPORT_FORMAT_CV}">CHARACTERVAULT</div>`);
 
     exportPopup.append(cvOption);
 }
