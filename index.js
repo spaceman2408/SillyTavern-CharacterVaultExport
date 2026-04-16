@@ -267,28 +267,45 @@ function addExportOption() {
  * Intercept export format clicks to handle our custom format
  */
 function interceptExportClicks() {
-    // Use event delegation to catch clicks on export_format elements
-    // We attach our handler BEFORE SillyTavern's so we can stop propagation
-    $(document).off('click.charvault').on('click.charvault', '.export_format', async function (e) {
-        const format = $(this).data('format');
+    // SillyTavern binds its export handler to document for .export_format clicks
+    // The handler calls createOrEditCharacter() which triggers a save and causes EPERM errors
+    // We need to intercept and stop ST's handler from running for our format
 
-        // Only handle our format
-        if (format !== EXPORT_FORMAT_CV) {
-            return; // Let SillyTavern handle other formats
-        }
+    const exportPopup = document.getElementById('export_format_popup');
+    if (!exportPopup) return;
 
-        // Prevent the click from reaching SillyTavern's handler
+    // Remove any existing capture listener to prevent duplicates
+    // We store the handler on the element for cleanup
+    if (exportPopup._charvaultHandler) {
+        exportPopup.removeEventListener('click', exportPopup._charvaultHandler, true);
+    }
+
+    // Define the handler
+    const handler = async function (e) {
+        const target = e.target.closest('.export_format');
+        if (!target) return;
+
+        const format = target.dataset.format;
+        if (format !== EXPORT_FORMAT_CV) return;
+
+        // Stop the event completely - prevents jQuery delegated handlers
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
 
         // Hide the popup
         $('#export_format_popup').hide();
 
         // Handle our export
         await exportToCharacterVault();
+    };
 
-        return false;
-    });
+    // Store reference for cleanup
+    exportPopup._charvaultHandler = handler;
+
+    // Use capture phase to catch the click before it bubbles to document
+    // where jQuery's delegated handlers are waiting
+    exportPopup.addEventListener('click', handler, true);
 }
 
 /**
