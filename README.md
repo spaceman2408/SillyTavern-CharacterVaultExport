@@ -1,69 +1,34 @@
 # CharacterVault Export Extension for SillyTavern
 
-A SillyTavern extension that adds an export button to character cards, allowing quick export to [CharacterVault](https://spaceman2408.github.io/CharacterVault/).
+A companion extension for [CharacterVault](https://github.com/spaceman2408/CharacterVault).
+
+Export characters from [SillyTavern](https://github.com/SillyTavern/SillyTavern) to [CharacterVault](https://spaceman2408.github.io/CharacterVault/).
 
 ## Features
 
-- Adds a vault/box icon button to character cards in the grid view
-- Exports full character data including:
-  - Character metadata (name, description, personality, scenario, etc.)
-  - Avatar image as base64 data URL
-  - Lorebook entries
-  - Alternate greetings
-  - Tags and creator info
-  - Extension data (talkativeness, depth prompts, regex scripts, etc.)
-- Copies data to clipboard in CharacterVault-compatible format
-- Opens CharacterVault import page automatically
+- Adds "CharacterVault" option to the export menu
+- Exports character data including avatar, lorebook, and metadata
+- Opens CharacterVault automatically with character data ready
 
 ## Installation
 
-1. Copy this extension folder to your SillyTavern installation:
-   ```
-   public/scripts/extensions/third-party/SillyTavern-CharacterVaultExport/
-   ```
-
-2. Restart SillyTavern or reload extensions
-
-3. The export button will appear on character cards
+Open SillyTavern -> Extensions -> Install Extension -> Paste `https://github.com/spaceman2408/SillyTavern-CharacterVaultExport` and reload SillyTavern.
 
 ## Usage
 
-1. Navigate to the Characters tab in SillyTavern
-2. Hover over any character card
-3. Click the vault icon (📦) button
-4. The character is copied to your clipboard
-5. CharacterVault opens in a new tab with the import page
-6. Follow CharacterVault's import instructions
+1. Select a character
+2. Click Export → CharacterVault
+3. CharacterVault opens with your character ready to import
 
-## Clipboard Format
+### Settings
 
-The extension copies JSON data following the CharacterVault import specification:
-
-```json
-{
-  "source": "st",
-  "character": {
-    "spec": "chara_card_v2",
-    "spec_version": "2.0",
-    "data": { ... }
-  },
-  "avatar": "data:image/png;base64,..." // or null
-}
-```
+- **Use Localhost (dev mode)** - Toggle between GitHub Pages and `localhost:3000` for local CharacterVault development
 
 ## Development
 
-### File Structure
-
-- `manifest.json` - Extension manifest for SillyTavern
-- `index.js` - Main extension code
-- `styles.css` - Extension styles
-- `index.html` - Documentation page
-- `plan.md` - Implementation specification from CharacterVault
-
-### Building
-
-No build step required - this is a pure JavaScript/CSS extension.
+- `manifest.json` - Extension manifest
+- `index.js` - Main code
+- `styles.css` - Styles
 
 ## License
 
@@ -71,4 +36,4 @@ MIT
 
 ## Author
 
-spaceman2408
+[spaceman2408](https://github.com/spaceman2408)
