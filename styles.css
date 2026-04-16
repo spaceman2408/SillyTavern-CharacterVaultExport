@@ -1,0 +1,36 @@
+/* CharacterVault Export Extension Styles */
+
+/* Settings panel styling */
+#character_vault_export_settings .inline-drawer-content p {
+    margin-bottom: 10px;
+    opacity: 0.8;
+}
+
+#character_vault_export_settings .flex-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#character_vault_export_settings a {
+    color: var(--SmartThemeQuoteColor, #6464ff);
+}
+
+#character_vault_export_settings ol {
+    margin: 5px 0 0 15px;
+    padding: 0;
+}
+
+/* Checkbox label styling */
+#character_vault_export_settings .checkbox_label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+#character_vault_export_settings .checkbox_label input[type="checkbox"] {
+    margin: 0;
+}

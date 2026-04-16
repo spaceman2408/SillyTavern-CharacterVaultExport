@@ -1,0 +1,395 @@
+// CharacterVault Export Extension for SillyTavern
+// This extension adds a "CharacterVault" option to the export dropdown menu
+
+import { characters } from '../../../../script.js';
+import { getContext, extension_settings } from '../../../extensions.js';
+
+const EXTENSION_NAME = 'CharacterVaultExport';
+const SETTINGS_KEY = 'CharacterVaultExport';
+
+// URL options
+const URL_GITHUB_PAGES = 'https://spaceman2408.github.io/CharacterVault/#/import?source=st';
+const URL_LOCALHOST = 'http://localhost:3000/#/import?source=st';
+
+// Export format identifier
+const EXPORT_FORMAT_CV = 'charactervault';
+
+/**
+ * Get extension settings with defaults
+ * @returns {Object} Settings object
+ */
+function getSettings() {
+    if (!extension_settings[SETTINGS_KEY]) {
+        extension_settings[SETTINGS_KEY] = {
+            useLocalhost: false
+        };
+    }
+    return extension_settings[SETTINGS_KEY];
+}
+
+/**
+ * Get the CharacterVault URL based on settings
+ * @returns {string} URL to open
+ */
+function getCharacterVaultUrl() {
+    const settings = getSettings();
+    return settings.useLocalhost ? URL_LOCALHOST : URL_GITHUB_PAGES;
+}
+
+/**
+ * Converts a File/Blob to base64 data URL
+ * @param {Blob} blob - The blob to convert
+ * @returns {Promise<string>} Base64 data URL
+ */
+async function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+/**
+ * Fetches character avatar and converts to base64
+ * @param {number} characterIndex - Index of character in characters array
+ * @returns {Promise<string|null>} Base64 data URL or null
+ */
+async function getCharacterAvatarBase64(characterIndex) {
+    try {
+        const character = characters[characterIndex];
+        if (!character || !character.avatar) {
+            return null;
+        }
+
+        // Try to get the avatar image from the character's folder
+        const avatarUrl = `/characters/${character.avatar}`;
+        const response = await fetch(avatarUrl);
+
+        if (!response.ok) {
+            console.warn(`[${EXTENSION_NAME}] Failed to fetch avatar: ${response.status}`);
+            return null;
+        }
+
+        const blob = await response.blob();
+        const base64 = await blobToBase64(blob);
+        return base64;
+    } catch (error) {
+        console.warn(`[${EXTENSION_NAME}] Error getting avatar:`, error);
+        return null;
+    }
+}
+
+/**
+ * Extracts lorebook entry fields for export
+ * @param {Object} entry - Lorebook entry
+ * @returns {Object} Formatted entry
+ */
+function extractLorebookEntry(entry) {
+    return {
+        id: entry.id ?? 0,
+        keys: entry.keys ?? [],
+        secondary_keys: entry.secondary_keys ?? [],
+        comment: entry.comment ?? '',
+        content: entry.content ?? '',
+        constant: entry.constant ?? false,
+        selective: entry.selective ?? false,
+        insertion_order: entry.insertion_order ?? 0,
+        enabled: entry.enabled ?? true,
+        position: entry.position ?? 'after_char',
+        name: entry.name ?? '',
+        priority: entry.priority ?? 0,
+        case_sensitive: entry.case_sensitive ?? false,
+        extensions: entry.extensions ?? {}
+    };
+}
+
+/**
+ * Extracts character book data
+ * @param {Object} characterBook - Character book object
+ * @returns {Object|null} Formatted character book or null
+ */
+function extractCharacterBook(characterBook) {
+    if (!characterBook) return null;
+
+    return {
+        name: characterBook.name ?? '',
+        description: characterBook.description ?? '',
+        scan_depth: characterBook.scan_depth ?? 100,
+        token_budget: characterBook.token_budget ?? 500,
+        recursive_scanning: characterBook.recursive_scanning ?? false,
+        extensions: characterBook.extensions ?? {},
+        entries: (characterBook.entries ?? []).map(extractLorebookEntry)
+    };
+}
+
+/**
+ * Builds the clipboard payload for CharacterVault
+ * @param {number} characterIndex - Index of character in characters array
+ * @returns {Promise<Object>} Clipboard payload
+ */
+async function buildClipboardPayload(characterIndex) {
+    const character = characters[characterIndex];
+    if (!character) {
+        throw new Error('Character not found');
+    }
+
+    // Get character data - prefer data property (V2 format), fall back to top-level
+    const data = character.data || {};
+
+    // Get avatar as base64
+    const avatar = await getCharacterAvatarBase64(characterIndex);
+
+    // Build the character card V2 structure
+    const characterCard = {
+        spec: 'chara_card_v2',
+        spec_version: '2.0',
+        data: {
+            name: data.name ?? character.name ?? 'Unknown',
+            description: data.description ?? '',
+            personality: data.personality ?? '',
+            scenario: data.scenario ?? '',
+            first_mes: data.first_mes ?? '',
+            mes_example: data.mes_example ?? '',
+            creator_notes: data.creator_notes ?? '',
+            system_prompt: data.system_prompt ?? '',
+            post_history_instructions: data.post_history_instructions ?? data.post_history_instructions ?? '',
+            alternate_greetings: data.alternate_greetings ?? [],
+            tags: data.tags ?? [],
+            creator: data.creator ?? '',
+            character_version: data.character_version ?? '',
+            extensions: {
+                talkativeness: data.extensions?.talkativeness,
+                world: data.extensions?.world,
+                depth_prompt: data.extensions?.depth_prompt,
+                regex_scripts: data.extensions?.regex_scripts,
+                ...((data.extensions && Object.keys(data.extensions).length > 0) ? data.extensions : {})
+            },
+            character_book: extractCharacterBook(data.character_book)
+        }
+    };
+
+    // Clean up undefined values in extensions
+    const extensions = characterCard.data.extensions;
+    Object.keys(extensions).forEach(key => {
+        if (extensions[key] === undefined) {
+            delete extensions[key];
+        }
+    });
+
+    // Build the final payload
+    const payload = {
+        source: 'st',
+        character: characterCard
+    };
+
+    // Add avatar if available
+    if (avatar) {
+        payload.avatar = avatar;
+    } else {
+        payload.avatar = null;
+    }
+
+    return payload;
+}
+
+/**
+ * Copies text to clipboard
+ * @param {string} text - Text to copy
+ * @returns {Promise<boolean>} Success status
+ */
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch (err) {
+        console.warn(`[${EXTENSION_NAME}] Clipboard write failed:`, err);
+        return false;
+    }
+}
+
+/**
+ * Exports the current character to CharacterVault
+ */
+async function exportToCharacterVault() {
+    try {
+        const context = getContext();
+        const this_chid = context.characterId;
+
+        if (this_chid === undefined || this_chid === null) {
+            toastr.warning('Please select a character first', 'CharacterVault Export');
+            return;
+        }
+
+        // Build payload
+        const payload = await buildClipboardPayload(this_chid);
+
+        // Copy to clipboard
+        const success = await copyToClipboard(JSON.stringify(payload));
+
+        if (!success) {
+            toastr.error('Failed to copy character to clipboard', 'CharacterVault Export');
+            return;
+        }
+
+        // Open CharacterVault in new tab
+        window.open(getCharacterVaultUrl(), '_blank');
+
+        toastr.success('Character copied! Opening CharacterVault...', 'CharacterVault Export');
+    } catch (error) {
+        console.error(`[${EXTENSION_NAME}] Export failed:`, error);
+        toastr.error(`Export failed: ${error.message}`, 'CharacterVault Export');
+    }
+}
+
+/**
+ * Adds CharacterVault option to the export format popup
+ */
+function addExportOption() {
+    const exportPopup = $('#export_format_popup');
+
+    // Check if already added
+    if (exportPopup.find(`[data-format="${EXPORT_FORMAT_CV}"]`).length > 0) {
+        return;
+    }
+
+    // Add the CharacterVault option
+    const cvOption = $(`
+        <div class="export_format list-group-item" data-format="${EXPORT_FORMAT_CV}">
+            <i class="fa-solid fa-box-archive"></i> CharacterVault
+        </div>
+    `);
+
+    exportPopup.append(cvOption);
+}
+
+/**
+ * Intercept export format clicks to handle our custom format
+ */
+function interceptExportClicks() {
+    // Use event delegation to catch clicks on export_format elements
+    // We attach our handler BEFORE SillyTavern's so we can stop propagation
+    $(document).off('click.charvault').on('click.charvault', '.export_format', async function (e) {
+        const format = $(this).data('format');
+
+        // Only handle our format
+        if (format !== EXPORT_FORMAT_CV) {
+            return; // Let SillyTavern handle other formats
+        }
+
+        // Prevent the click from reaching SillyTavern's handler
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Hide the popup
+        $('#export_format_popup').hide();
+
+        // Handle our export
+        await exportToCharacterVault();
+
+        return false;
+    });
+}
+
+/**
+ * Inject extension settings into the extensions panel
+ */
+async function injectSettings() {
+    // Check if already injected
+    if ($('#character_vault_export_settings').length > 0) return;
+
+    const settings = getSettings();
+    const currentUrl = getCharacterVaultUrl();
+
+    const settingsHtml = `
+        <div id="character_vault_export_settings">
+            <div class="inline-drawer">
+                <div class="inline-drawer-toggle inline-drawer-header">
+                    <b>CharacterVault Export</b>
+                    <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+                </div>
+                <div class="inline-drawer-content">
+                    <p>
+                        Export characters to CharacterVault by selecting "CharacterVault" from the Export menu.
+                    </p>
+                    <div class="flex-container">
+                        <label class="checkbox_label" for="charvault_use_localhost" title="Use localhost:3000 instead of GitHub Pages">
+                            <input id="charvault_use_localhost" type="checkbox" ${settings.useLocalhost ? 'checked' : ''}>
+                            <span>Use Localhost (dev mode)</span>
+                        </label>
+                    </div>
+                    <div class="flex-container">
+                        <span>CharacterVault URL:</span>
+                        <a href="${currentUrl}" target="_blank" id="charvault_url_link">
+                            Open CharacterVault <i class="fa-solid fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                    <div>
+                        <small>
+                            <strong>How to use:</strong>
+                            <ol>
+                                <li>Select a character</li>
+                                <li>Click the <i class="fa-solid fa-file-export"></i> Export button</li>
+                                <li>Choose "CharacterVault" from the dropdown</li>
+                                <li>CharacterVault will open with your character data ready</li>
+                            </ol>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    $('#extensions_settings').append(settingsHtml);
+
+    // Bind toggle event
+    $(document).on('change', '#charvault_use_localhost', function() {
+        const useLocalhost = $(this).prop('checked');
+        settings.useLocalhost = useLocalhost;
+        
+        // Update the URL link
+        const newUrl = getCharacterVaultUrl();
+        $('#charvault_url_link').attr('href', newUrl);
+        
+        console.log(`[${EXTENSION_NAME}] URL mode changed to: ${useLocalhost ? 'localhost' : 'github pages'}`);
+    });
+}
+
+/**
+ * Initialize the extension
+ */
+async function init() {
+    console.log(`[${EXTENSION_NAME}] Initializing...`);
+
+    // Inject settings panel
+    await injectSettings();
+
+    // Add the export option
+    addExportOption();
+
+    // Intercept export clicks
+    interceptExportClicks();
+
+    // Watch for popup being shown and ensure our option is there
+    const observer = new MutationObserver(() => {
+        addExportOption();
+    });
+
+    const exportPopup = document.getElementById('export_format_popup');
+    if (exportPopup) {
+        observer.observe(exportPopup, { childList: true });
+    }
+
+    console.log(`[${EXTENSION_NAME}] Extension loaded successfully`);
+}
+
+// Initialize when jQuery is ready
+jQuery(async () => {
+    await init();
+});
+
+// Export for potential external use
+window.CharacterVaultExport = {
+    exportToCharacterVault,
+    buildClipboardPayload
+};
