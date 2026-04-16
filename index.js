@@ -7,9 +7,13 @@ import { getContext, extension_settings } from '../../../extensions.js';
 const EXTENSION_NAME = 'CharacterVaultExport';
 const SETTINGS_KEY = 'CharacterVaultExport';
 
-// URL options
+// URL options for export (with import path)
 const URL_GITHUB_PAGES = 'https://spaceman2408.github.io/CharacterVault/#/import?source=st';
 const URL_LOCALHOST = 'http://localhost:3000/#/import?source=st';
+
+// Base URL options for settings link (without import path)
+const URL_GITHUB_PAGES_BASE = 'https://spaceman2408.github.io/CharacterVault/';
+const URL_LOCALHOST_BASE = 'http://localhost:3000/';
 
 // Export format identifier
 const EXPORT_FORMAT_CV = 'charactervault';
@@ -28,12 +32,21 @@ function getSettings() {
 }
 
 /**
- * Get the CharacterVault URL based on settings
+ * Get the CharacterVault URL for export (with import path)
  * @returns {string} URL to open
  */
 function getCharacterVaultUrl() {
     const settings = getSettings();
     return settings.useLocalhost ? URL_LOCALHOST : URL_GITHUB_PAGES;
+}
+
+/**
+ * Get the CharacterVault base URL for settings link (without import path)
+ * @returns {string} Base URL
+ */
+function getCharacterVaultBaseUrl() {
+    const settings = getSettings();
+    return settings.useLocalhost ? URL_LOCALHOST_BASE : URL_GITHUB_PAGES_BASE;
 }
 
 /**
@@ -316,7 +329,7 @@ async function injectSettings() {
     if ($('#character_vault_export_settings').length > 0) return;
 
     const settings = getSettings();
-    const currentUrl = getCharacterVaultUrl();
+    const settingsUrl = getCharacterVaultBaseUrl();
 
     const settingsHtml = `
         <div id="character_vault_export_settings">
@@ -337,7 +350,7 @@ async function injectSettings() {
                     </div>
                     <div class="flex-container">
                         <span>CharacterVault URL:</span>
-                        <a href="${currentUrl}" target="_blank" id="charvault_url_link">
+                        <a href="${settingsUrl}" target="_blank" id="charvault_url_link">
                             Open CharacterVault <i class="fa-solid fa-external-link-alt"></i>
                         </a>
                     </div>
@@ -363,11 +376,11 @@ async function injectSettings() {
     $(document).on('change', '#charvault_use_localhost', function() {
         const useLocalhost = $(this).prop('checked');
         settings.useLocalhost = useLocalhost;
-        
-        // Update the URL link
-        const newUrl = getCharacterVaultUrl();
+
+        // Update the settings URL link (base URL, not export URL)
+        const newUrl = getCharacterVaultBaseUrl();
         $('#charvault_url_link').attr('href', newUrl);
-        
+
         console.log(`[${EXTENSION_NAME}] URL mode changed to: ${useLocalhost ? 'localhost' : 'github pages'}`);
     });
 }
