@@ -36,6 +36,11 @@
 }
 
 /* Manual Copy Popup (mobile fallback) */
+.charvault-manual-copy-popup {
+    display: block !important;
+    visibility: visible !important;
+}
+
 .charvault-manual-copy-popup p {
     margin-bottom: 10px;
     opacity: 0.9;
@@ -58,6 +63,7 @@
     word-break: break-all;
     -webkit-user-select: all;
     user-select: all;
+    display: block;
 }
 
 .charvault-copy-status {
@@ -74,7 +80,15 @@
     color: #ff9800;
 }
 
-/* Style the custom Copy button */
-.charvault-copy-btn {
-    cursor: pointer;
+/* Ensure popup is visible on mobile */
+@media (max-width: 768px) {
+    .charvault-manual-copy-popup {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .charvault-payload-textarea {
+        min-height: 150px;
+        font-size: 0.75em;
+    }
 }

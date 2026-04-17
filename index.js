@@ -258,6 +258,7 @@ function escapeHtml(text) {
  * @param {string} payloadText - The JSON payload string
  */
 async function showManualCopyPopup(payloadText) {
+    const header = 'CharacterVault Export - Mobile Copy';
     const popupContent = `
         <div class="charvault-manual-copy-popup">
             <p>Your device couldn't copy automatically. Copy the data below, then open CharacterVault.</p>
@@ -266,22 +267,32 @@ async function showManualCopyPopup(payloadText) {
         </div>
     `;
 
-    const popup = new Popup(popupContent, POPUP_TYPE.CONFIRM, '', {
+    // Create the popup with proper structure for mobile
+    const popup = new Popup(popupContent, POPUP_TYPE.TEXT, '', {
         okButton: 'Open CharacterVault',
         cancelButton: 'Close',
         wide: true,
+        large: isMobile(), // Use large mode on mobile for better visibility
         allowVerticalScrolling: true,
-        customButtons: [
-            {
-                text: 'Copy to Clipboard',
-                icon: 'fa-copy',
-                classes: ['charvault-copy-btn'],
-                result: null, // Don't close popup on click
-                action: () => {
-                    const textarea = popup.content.querySelector('.charvault-payload-textarea');
-                    const statusDiv = popup.content.querySelector('.charvault-copy-status');
-                    if (textarea) {
-                        const success = fallbackCopyFromTextarea(textarea);
+        onOpen: (popupInstance) => {
+            const textarea = popupInstance.content.querySelector('.charvault-payload-textarea');
+            if (textarea) {
+                // Delay to ensure popup is fully rendered
+                setTimeout(() => {
+                    textarea.focus();
+                    textarea.select();
+                    textarea.setSelectionRange(0, 99999);
+                }, 150);
+            }
+
+            // Attach copy button handler after popup is in DOM
+            const copyBtn = popupInstance.content.querySelector('.charvault-copy-action-btn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => {
+                    const ta = popupInstance.content.querySelector('.charvault-payload-textarea');
+                    const statusDiv = popupInstance.content.querySelector('.charvault-copy-status');
+                    if (ta) {
+                        const success = fallbackCopyFromTextarea(ta);
                         if (success) {
                             statusDiv.textContent = '✓ Copied!';
                             statusDiv.className = 'charvault-copy-status charvault-copy-success';
@@ -290,17 +301,7 @@ async function showManualCopyPopup(payloadText) {
                             statusDiv.className = 'charvault-copy-status charvault-copy-fallback';
                         }
                     }
-                }
-            }
-        ],
-        onOpen: (popupInstance) => {
-            const textarea = popupInstance.content.querySelector('.charvault-payload-textarea');
-            if (textarea) {
-                setTimeout(() => {
-                    textarea.focus();
-                    textarea.select();
-                    textarea.setSelectionRange(0, 99999);
-                }, 100);
+                });
             }
         }
     });
