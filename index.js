@@ -313,6 +313,8 @@ async function showManualCopyPopup(characterIndex) {
 
             // Copy button handler
             copyBtnEl.addEventListener('click', () => {
+                textareaEl.focus();
+                textareaEl.setSelectionRange(0, textareaEl.value.length);
                 const success = fallbackCopyFromTextarea(textareaEl);
                 if (success) {
                     statusDiv.textContent = '✓ Copied!';
@@ -329,12 +331,7 @@ async function showManualCopyPopup(characterIndex) {
                 }
             });
 
-            // Auto-select textarea after render
-            setTimeout(() => {
-                textareaEl.focus();
-                textareaEl.select();
-                textareaEl.setSelectionRange(0, 99999);
-            }, 150);
+
         }
     });
 
