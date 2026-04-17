@@ -34,3 +34,47 @@
 #character_vault_export_settings .checkbox_label input[type="checkbox"] {
     margin: 0;
 }
+
+/* Manual Copy Popup (mobile fallback) */
+.charvault-manual-copy-popup p {
+    margin-bottom: 10px;
+    opacity: 0.9;
+    font-size: 0.9em;
+}
+
+.charvault-payload-textarea {
+    width: 100%;
+    min-height: 120px;
+    max-height: 300px;
+    resize: vertical;
+    font-family: monospace;
+    font-size: 0.8em;
+    background-color: var(--SmartThemeBotMesBlurColor, rgba(0,0,0,0.3));
+    color: var(--SmartThemeBotMesColor, #ccc);
+    border: 1px solid var(--SmartThemeBorderColor, #333);
+    border-radius: 4px;
+    padding: 8px;
+    overflow: auto;
+    word-break: break-all;
+    -webkit-user-select: all;
+    user-select: all;
+}
+
+.charvault-copy-status {
+    margin-top: 8px;
+    font-size: 0.85em;
+    min-height: 1.2em;
+}
+
+.charvault-copy-status.charvault-copy-success {
+    color: #4caf50;
+}
+
+.charvault-copy-status.charvault-copy-fallback {
+    color: #ff9800;
+}
+
+/* Style the custom Copy button */
+.charvault-copy-btn {
+    cursor: pointer;
+}

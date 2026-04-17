@@ -3,6 +3,8 @@
 
 import { characters } from '../../../../script.js';
 import { getContext, extension_settings } from '../../../extensions.js';
+import { isMobile } from '../../RossAscends-mods.js';
+import { Popup, POPUP_RESULT, POPUP_TYPE } from '../../popup.js';
 
 const EXTENSION_NAME = 'CharacterVaultExport';
 const SETTINGS_KEY = 'CharacterVaultExport';
@@ -207,17 +209,108 @@ async function buildClipboardPayload(characterIndex) {
 }
 
 /**
- * Copies text to clipboard
+ * Attempts to copy text to clipboard using the modern API.
+ * Returns { success: boolean, text: string } so callers can fallback.
  * @param {string} text - Text to copy
- * @returns {Promise<boolean>} Success status
+ * @returns {Promise<{success: boolean, text: string}>}
  */
 async function copyToClipboard(text) {
     try {
         await navigator.clipboard.writeText(text);
-        return true;
+        return { success: true, text };
     } catch (err) {
-        console.warn(`[${EXTENSION_NAME}] Clipboard write failed:`, err);
+        console.warn(`[${EXTENSION_NAME}] Clipboard API failed:`, err);
+        return { success: false, text };
+    }
+}
+
+/**
+ * Fallback clipboard copy using execCommand.
+ * Works on mobile when triggered from a user gesture on a focused textarea.
+ * @param {HTMLTextAreaElement} textarea - The textarea containing the text
+ * @returns {boolean} Success status
+ */
+function fallbackCopyFromTextarea(textarea) {
+    try {
+        textarea.select();
+        textarea.setSelectionRange(0, 99999); // iOS compatibility
+        const success = document.execCommand('copy');
+        return success;
+    } catch (err) {
+        console.warn(`[${EXTENSION_NAME}] execCommand copy failed:`, err);
         return false;
+    }
+}
+
+/**
+ * Escapes HTML special characters to prevent XSS in the textarea
+ * @param {string} text
+ * @returns {string}
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Shows a popup with the payload text for manual copying (mobile fallback)
+ * @param {string} payloadText - The JSON payload string
+ */
+async function showManualCopyPopup(payloadText) {
+    const popupContent = `
+        <div class="charvault-manual-copy-popup">
+            <p>Your device couldn't copy automatically. Copy the data below, then open CharacterVault.</p>
+            <textarea class="charvault-payload-textarea" readonly rows="8">${escapeHtml(payloadText)}</textarea>
+            <div class="charvault-copy-status"></div>
+        </div>
+    `;
+
+    const popup = new Popup(popupContent, POPUP_TYPE.CONFIRM, '', {
+        okButton: 'Open CharacterVault',
+        cancelButton: 'Close',
+        wide: true,
+        allowVerticalScrolling: true,
+        customButtons: [
+            {
+                text: 'Copy to Clipboard',
+                icon: 'fa-copy',
+                classes: ['charvault-copy-btn'],
+                result: null, // Don't close popup on click
+                action: () => {
+                    const textarea = popup.content.querySelector('.charvault-payload-textarea');
+                    const statusDiv = popup.content.querySelector('.charvault-copy-status');
+                    if (textarea) {
+                        const success = fallbackCopyFromTextarea(textarea);
+                        if (success) {
+                            statusDiv.textContent = '✓ Copied!';
+                            statusDiv.className = 'charvault-copy-status charvault-copy-success';
+                        } else {
+                            statusDiv.textContent = 'Select the text above and use your device\'s copy function.';
+                            statusDiv.className = 'charvault-copy-status charvault-copy-fallback';
+                        }
+                    }
+                }
+            }
+        ],
+        onOpen: (popupInstance) => {
+            const textarea = popupInstance.content.querySelector('.charvault-payload-textarea');
+            if (textarea) {
+                setTimeout(() => {
+                    textarea.focus();
+                    textarea.select();
+                    textarea.setSelectionRange(0, 99999);
+                }, 100);
+            }
+        }
+    });
+
+    const result = await popup.show();
+
+    // If user clicked "Open CharacterVault" (AFFIRMATIVE), open the URL
+    if (result === POPUP_RESULT.AFFIRMATIVE) {
+        window.open(getCharacterVaultUrl(), '_blank');
+        toastr.success('Opening CharacterVault — paste your character data there', 'CharacterVault Export');
     }
 }
 
@@ -236,19 +329,26 @@ async function exportToCharacterVault() {
 
         // Build payload
         const payload = await buildClipboardPayload(this_chid);
+        const payloadText = JSON.stringify(payload);
 
-        // Copy to clipboard
-        const success = await copyToClipboard(JSON.stringify(payload));
-
-        if (!success) {
-            toastr.error('Failed to copy character to clipboard', 'CharacterVault Export');
+        // On mobile, skip clipboard API and go straight to manual copy popup
+        // for cleaner UX (avoids the brief error flash)
+        if (isMobile()) {
+            await showManualCopyPopup(payloadText);
             return;
         }
 
-        // Open CharacterVault in new tab
-        window.open(getCharacterVaultUrl(), '_blank');
+        // Attempt clipboard copy (desktop)
+        const { success } = await copyToClipboard(payloadText);
 
-        toastr.success('Character copied! Opening CharacterVault...', 'CharacterVault Export');
+        if (success) {
+            // Normal flow — clipboard worked
+            window.open(getCharacterVaultUrl(), '_blank');
+            toastr.success('Character copied! Opening CharacterVault...', 'CharacterVault Export');
+        } else {
+            // Desktop but clipboard failed — show manual copy popup as fallback
+            await showManualCopyPopup(payloadText);
+        }
     } catch (error) {
         console.error(`[${EXTENSION_NAME}] Export failed:`, error);
         toastr.error(`Export failed: ${error.message}`, 'CharacterVault Export');
