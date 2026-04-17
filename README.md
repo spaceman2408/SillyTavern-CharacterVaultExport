@@ -24,11 +24,9 @@ Open SillyTavern -> Extensions -> Install Extension -> Paste `https://github.com
 
 - **Use Localhost (dev mode)** - Toggle between GitHub Pages and `localhost:3000` for local CharacterVault development
 
-## Development
-
-- `manifest.json` - Extension manifest
-- `index.js` - Main code
-- `styles.css` - Styles
+## MOBILE USERS
+- Due to mobile browser limitations, the extension cannot add the avatar image to the clipboard export. It's essentially a JSON export.
+- It would be faster to just export as PNG from SillyTavern and upload to CharacterVault.
 
 ## License
 
