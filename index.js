@@ -254,61 +254,92 @@ function escapeHtml(text) {
 }
 
 /**
- * Shows a popup with the payload text for manual copying (mobile fallback)
- * @param {string} payloadText - The JSON payload string
+ * Shows a popup immediately with a loading spinner, builds the payload, then updates the popup.
+ * @param {number} characterIndex - Index of character in characters array
  */
-async function showManualCopyPopup(payloadText) {
-    const header = 'CharacterVault Export - Mobile Copy';
-    const popupContent = `
+async function showManualCopyPopup(characterIndex) {
+    // Show popup immediately with loading state
+    const loadingContent = `
         <div class="charvault-manual-copy-popup">
-            <p>Your device couldn't copy automatically. Copy the data below, then open CharacterVault.</p>
-            <textarea class="charvault-payload-textarea" readonly rows="8">${escapeHtml(payloadText)}</textarea>
+            <p>Preparing character data for export...</p>
+            <div class="charvault-loading-spinner">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <span>Fetching character data...</span>
+            </div>
+            <textarea class="charvault-payload-textarea" readonly rows="8" style="display:none;"></textarea>
+            <div class="charvault-copy-controls" style="display:none;">
+                <button class="charvault-copy-action-btn menu_button" type="button">
+                    <i class="fa-solid fa-copy"></i>
+                    <span>Copy to Clipboard</span>
+                </button>
+            </div>
             <div class="charvault-copy-status"></div>
         </div>
     `;
 
-    // Create the popup with proper structure for mobile
-    const popup = new Popup(popupContent, POPUP_TYPE.TEXT, '', {
+    const popup = new Popup(loadingContent, POPUP_TYPE.TEXT, '', {
         okButton: 'Open CharacterVault',
         cancelButton: 'Close',
         wide: true,
-        large: isMobile(), // Use large mode on mobile for better visibility
+        large: isMobile(),
         allowVerticalScrolling: true,
-        onOpen: (popupInstance) => {
-            const textarea = popupInstance.content.querySelector('.charvault-payload-textarea');
-            if (textarea) {
-                // Delay to ensure popup is fully rendered
-                setTimeout(() => {
-                    textarea.focus();
-                    textarea.select();
-                    textarea.setSelectionRange(0, 99999);
-                }, 150);
+        onOpen: async (popupInstance) => {
+            const contentEl = popupInstance.content;
+            const spinnerEl = contentEl.querySelector('.charvault-loading-spinner');
+            const textareaEl = contentEl.querySelector('.charvault-payload-textarea');
+            const controlsEl = contentEl.querySelector('.charvault-copy-controls');
+            const copyBtnEl = contentEl.querySelector('.charvault-copy-action-btn');
+            const statusDiv = contentEl.querySelector('.charvault-copy-status');
+            const descEl = contentEl.querySelector('.charvault-manual-copy-popup > p');
+
+            let payloadText;
+            try {
+                const payload = await buildClipboardPayload(characterIndex);
+                payloadText = JSON.stringify(payload);
+            } catch (err) {
+                spinnerEl.style.display = 'none';
+                descEl.textContent = 'Failed to build character data.';
+                statusDiv.textContent = `Error: ${err.message}`;
+                statusDiv.className = 'charvault-copy-status charvault-copy-fallback';
+                return;
             }
 
-            // Attach copy button handler after popup is in DOM
-            const copyBtn = popupInstance.content.querySelector('.charvault-copy-action-btn');
-            if (copyBtn) {
-                copyBtn.addEventListener('click', () => {
-                    const ta = popupInstance.content.querySelector('.charvault-payload-textarea');
-                    const statusDiv = popupInstance.content.querySelector('.charvault-copy-status');
-                    if (ta) {
-                        const success = fallbackCopyFromTextarea(ta);
-                        if (success) {
-                            statusDiv.textContent = '✓ Copied!';
-                            statusDiv.className = 'charvault-copy-status charvault-copy-success';
-                        } else {
-                            statusDiv.textContent = 'Select the text above and use your device\'s copy function.';
-                            statusDiv.className = 'charvault-copy-status charvault-copy-fallback';
-                        }
-                    }
-                });
-            }
+            // Swap from loading to payload display
+            spinnerEl.style.display = 'none';
+            descEl.textContent = 'Copy the data below, then open CharacterVault to paste it.';
+            textareaEl.value = payloadText;
+            textareaEl.style.display = 'block';
+            controlsEl.style.display = 'flex';
+
+            // Copy button handler
+            copyBtnEl.addEventListener('click', () => {
+                const success = fallbackCopyFromTextarea(textareaEl);
+                if (success) {
+                    statusDiv.textContent = '✓ Copied!';
+                    statusDiv.className = 'charvault-copy-status charvault-copy-success';
+                } else {
+                    // Try modern API as secondary fallback
+                    navigator.clipboard.writeText(payloadText).then(() => {
+                        statusDiv.textContent = '✓ Copied!';
+                        statusDiv.className = 'charvault-copy-status charvault-copy-success';
+                    }).catch(() => {
+                        statusDiv.textContent = 'Copy failed. Tap the text field, select all, and use your device copy.';
+                        statusDiv.className = 'charvault-copy-status charvault-copy-fallback';
+                    });
+                }
+            });
+
+            // Auto-select textarea after render
+            setTimeout(() => {
+                textareaEl.focus();
+                textareaEl.select();
+                textareaEl.setSelectionRange(0, 99999);
+            }, 150);
         }
     });
 
     const result = await popup.show();
 
-    // If user clicked "Open CharacterVault" (AFFIRMATIVE), open the URL
     if (result === POPUP_RESULT.AFFIRMATIVE) {
         window.open(getCharacterVaultUrl(), '_blank');
         toastr.success('Opening CharacterVault — paste your character data there', 'CharacterVault Export');
@@ -328,18 +359,16 @@ async function exportToCharacterVault() {
             return;
         }
 
-        // Build payload
-        const payload = await buildClipboardPayload(this_chid);
-        const payloadText = JSON.stringify(payload);
-
         // On mobile, skip clipboard API and go straight to manual copy popup
         // for cleaner UX (avoids the brief error flash)
         if (isMobile()) {
-            await showManualCopyPopup(payloadText);
+            await showManualCopyPopup(this_chid);
             return;
         }
 
-        // Attempt clipboard copy (desktop)
+        // Attempt clipboard copy (desktop) — build payload inline
+        const payload = await buildClipboardPayload(this_chid);
+        const payloadText = JSON.stringify(payload);
         const { success } = await copyToClipboard(payloadText);
 
         if (success) {
@@ -348,7 +377,7 @@ async function exportToCharacterVault() {
             toastr.success('Character copied! Opening CharacterVault...', 'CharacterVault Export');
         } else {
             // Desktop but clipboard failed — show manual copy popup as fallback
-            await showManualCopyPopup(payloadText);
+            await showManualCopyPopup(this_chid);
         }
     } catch (error) {
         console.error(`[${EXTENSION_NAME}] Export failed:`, error);

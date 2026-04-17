@@ -47,6 +47,20 @@
     font-size: 0.9em;
 }
 
+.charvault-loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 30px 0;
+    font-size: 1em;
+    opacity: 0.8;
+}
+
+.charvault-loading-spinner .fa-spinner {
+    font-size: 1.5em;
+}
+
 .charvault-payload-textarea {
     width: 100%;
     min-height: 120px;
@@ -66,10 +80,26 @@
     display: block;
 }
 
+.charvault-copy-controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    gap: 10px;
+}
+
+.charvault-copy-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 0.9em;
+}
+
 .charvault-copy-status {
     margin-top: 8px;
     font-size: 0.85em;
     min-height: 1.2em;
+    text-align: center;
 }
 
 .charvault-copy-status.charvault-copy-success {
@@ -90,5 +120,10 @@
     .charvault-payload-textarea {
         min-height: 150px;
         font-size: 0.75em;
+    }
+
+    .charvault-copy-action-btn {
+        padding: 10px 20px;
+        font-size: 1em;
     }
 }
