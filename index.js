@@ -5,6 +5,7 @@ import { characters } from '../../../../script.js';
 import { getContext, extension_settings } from '../../../extensions.js';
 import { isMobile } from '../../../RossAscends-mods.js';
 import { Popup, POPUP_RESULT, POPUP_TYPE } from '../../../popup.js';
+import { saveSettingsDebounced } from '../../../../script.js';
 
 const EXTENSION_NAME = 'CharacterVaultExport';
 const SETTINGS_KEY = 'CharacterVaultExport';
@@ -505,6 +506,9 @@ async function injectSettings() {
     $(document).on('change', '#charvault_use_localhost', function() {
         const useLocalhost = $(this).prop('checked');
         settings.useLocalhost = useLocalhost;
+
+        // Save settings to persist the change
+        saveSettingsDebounced();
 
         // Update the settings URL link (base URL, not export URL)
         const newUrl = getCharacterVaultBaseUrl();
