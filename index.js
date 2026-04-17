@@ -141,9 +141,10 @@ function extractCharacterBook(characterBook) {
 /**
  * Builds the clipboard payload for CharacterVault
  * @param {number} characterIndex - Index of character in characters array
+ * @param {boolean} includeAvatar - Whether to include the avatar base64 (default: true)
  * @returns {Promise<Object>} Clipboard payload
  */
-async function buildClipboardPayload(characterIndex) {
+async function buildClipboardPayload(characterIndex, includeAvatar = true) {
     const character = characters[characterIndex];
     if (!character) {
         throw new Error('Character not found');
@@ -152,8 +153,11 @@ async function buildClipboardPayload(characterIndex) {
     // Get character data - prefer data property (V2 format), fall back to top-level
     const data = character.data || {};
 
-    // Get avatar as base64
-    const avatar = await getCharacterAvatarBase64(characterIndex);
+    // Get avatar as base64 only if requested
+    let avatar = null;
+    if (includeAvatar) {
+        avatar = await getCharacterAvatarBase64(characterIndex);
+    }
 
     // Build the character card V2 structure
     const characterCard = {
@@ -198,7 +202,7 @@ async function buildClipboardPayload(characterIndex) {
         character: characterCard
     };
 
-    // Add avatar if available
+    // Add avatar if available and requested
     if (avatar) {
         payload.avatar = avatar;
     } else {
@@ -296,7 +300,8 @@ async function showManualCopyPopup(characterIndex) {
 
             let payloadText;
             try {
-                const payload = await buildClipboardPayload(characterIndex);
+                // On mobile, exclude avatar to keep payload small and fast
+                const payload = await buildClipboardPayload(characterIndex, false);
                 payloadText = JSON.stringify(payload);
             } catch (err) {
                 spinnerEl.style.display = 'none';
@@ -308,7 +313,7 @@ async function showManualCopyPopup(characterIndex) {
 
             // Swap from loading to payload display
             spinnerEl.style.display = 'none';
-            descEl.textContent = 'Copy the data below, then open CharacterVault to paste it.';
+            descEl.innerHTML = 'Copy the data below, then open CharacterVault to paste it.<br><small>(Avatar image excluded on mobile for speed — upload the image manually in CharacterVault.)</small>';
             textareaEl.value = payloadText;
             textareaEl.style.display = 'block';
             controlsEl.style.display = 'flex';
