@@ -4,7 +4,7 @@
 import { characters } from '../../../../script.js';
 import { getContext, extension_settings } from '../../../extensions.js';
 import { isMobile } from '../../../RossAscends-mods.js';
-import { Popup, POPUP_RESULT, POPUP_TYPE } from '../../popup.js';
+import { Popup, POPUP_RESULT, POPUP_TYPE } from '../../../popup.js';
 
 const EXTENSION_NAME = 'CharacterVaultExport';
 const SETTINGS_KEY = 'CharacterVaultExport';
