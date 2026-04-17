@@ -232,8 +232,10 @@ async function copyToClipboard(text) {
  */
 function fallbackCopyFromTextarea(textarea) {
     try {
-        textarea.select();
-        textarea.setSelectionRange(0, 99999); // iOS compatibility
+        // Use the actual content length — not a hardcoded max.
+        // Base64 avatar payloads can be 100KB+ and 99999 truncates them.
+        textarea.focus();
+        textarea.setSelectionRange(0, textarea.value.length);
         const success = document.execCommand('copy');
         return success;
     } catch (err) {
@@ -313,8 +315,6 @@ async function showManualCopyPopup(characterIndex) {
 
             // Copy button handler
             copyBtnEl.addEventListener('click', () => {
-                textareaEl.focus();
-                textareaEl.setSelectionRange(0, textareaEl.value.length);
                 const success = fallbackCopyFromTextarea(textareaEl);
                 if (success) {
                     statusDiv.textContent = '✓ Copied!';
@@ -325,7 +325,7 @@ async function showManualCopyPopup(characterIndex) {
                         statusDiv.textContent = '✓ Copied!';
                         statusDiv.className = 'charvault-copy-status charvault-copy-success';
                     }).catch(() => {
-                        statusDiv.textContent = 'Copy failed. Tap the text field, select all, and use your device copy.';
+                        statusDiv.textContent = 'Copy failed. Long-press the text, select all, and use your device copy.';
                         statusDiv.className = 'charvault-copy-status charvault-copy-fallback';
                     });
                 }
