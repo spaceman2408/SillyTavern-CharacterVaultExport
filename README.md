@@ -2,7 +2,7 @@
 
 A companion extension for [CharacterVault](https://github.com/spaceman2408/CharacterVault).
 
-Export characters from [SillyTavern](https://github.com/SillyTavern/SillyTavern) to [CharacterVault](https://spaceman2408.github.io/CharacterVault/).
+Export characters from [SillyTavern](https://github.com/SillyTavern/SillyTavern) to [CharacterVault](https://vault.charactervault.app/).
 
 ## Features
 
@@ -22,7 +22,7 @@ Open SillyTavern -> Extensions -> Install Extension -> Paste `https://github.com
 
 ### Settings
 
-- **Use Localhost (dev mode)** - Toggle between GitHub Pages and `localhost:3000` for local CharacterVault development
+- **Use Localhost (dev mode)** - Toggle between `vault.charactervault.app` and `localhost:3000` for local CharacterVault development
 
 ## MOBILE USERS
 - Due to mobile browser limitations, the extension cannot add the avatar image to the clipboard export. It's essentially a JSON export.

@@ -11,11 +11,11 @@ const EXTENSION_NAME = 'CharacterVaultExport';
 const SETTINGS_KEY = 'CharacterVaultExport';
 
 // URL options for export (with import path)
-const URL_GITHUB_PAGES = 'https://spaceman2408.github.io/CharacterVault/#/import?source=st';
+const URL_PRODUCTION = 'https://vault.charactervault.app/#/import?source=st';
 const URL_LOCALHOST = 'http://localhost:3000/#/import?source=st';
 
 // Base URL options for settings link (without import path)
-const URL_GITHUB_PAGES_BASE = 'https://spaceman2408.github.io/CharacterVault/';
+const URL_PRODUCTION_BASE = 'https://vault.charactervault.app/';
 const URL_LOCALHOST_BASE = 'http://localhost:3000/';
 
 // Export format identifier
@@ -40,7 +40,7 @@ function getSettings() {
  */
 function getCharacterVaultUrl() {
     const settings = getSettings();
-    return settings.useLocalhost ? URL_LOCALHOST : URL_GITHUB_PAGES;
+    return settings.useLocalhost ? URL_LOCALHOST : URL_PRODUCTION;
 }
 
 /**
@@ -49,7 +49,7 @@ function getCharacterVaultUrl() {
  */
 function getCharacterVaultBaseUrl() {
     const settings = getSettings();
-    return settings.useLocalhost ? URL_LOCALHOST_BASE : URL_GITHUB_PAGES_BASE;
+    return settings.useLocalhost ? URL_LOCALHOST_BASE : URL_PRODUCTION_BASE;
 }
 
 /**
@@ -473,7 +473,7 @@ async function injectSettings() {
                         Export characters to CharacterVault by selecting "CharacterVault" from the Export menu.
                     </p>
                     <div class="flex-container">
-                        <label class="checkbox_label" for="charvault_use_localhost" title="Use localhost:3000 instead of GitHub Pages">
+                        <label class="checkbox_label" for="charvault_use_localhost" title="Use localhost:3000 instead of vault.charactervault.app">
                             <input id="charvault_use_localhost" type="checkbox" ${settings.useLocalhost ? 'checked' : ''}>
                             <span>Use Localhost (dev mode)</span>
                         </label>
@@ -514,7 +514,7 @@ async function injectSettings() {
         const newUrl = getCharacterVaultBaseUrl();
         $('#charvault_url_link').attr('href', newUrl);
 
-        console.log(`[${EXTENSION_NAME}] URL mode changed to: ${useLocalhost ? 'localhost' : 'github pages'}`);
+        console.log(`[${EXTENSION_NAME}] URL mode changed to: ${useLocalhost ? 'localhost' : 'vault.charactervault.app'}`);
     });
 }
 
