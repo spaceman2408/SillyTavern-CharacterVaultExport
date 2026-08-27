@@ -1,0 +1,12 @@
+{
+    "display_name": "CharacterVault Export",
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "styles.css",
+    "author": "spaceman2408",
+    "version": "1.0.0",
+    "homePage": "https://github.com/spaceman2408/SillyTavern-CharacterVaultExport",
+    "auto_update": true,
+    "hooks": []
+}
