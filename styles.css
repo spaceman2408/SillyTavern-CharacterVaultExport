@@ -1,29 +1,17 @@
 /* CharacterVault Export Extension Styles */
 
 /* Settings panel styling */
+#character_vault_export_settings .inline-drawer-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
 #character_vault_export_settings .inline-drawer-content p {
-    margin-bottom: 10px;
+    margin: 0 0 4px;
     opacity: 0.8;
 }
 
-#character_vault_export_settings .flex-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-#character_vault_export_settings a {
-    color: var(--SmartThemeQuoteColor, #6464ff);
-}
-
-#character_vault_export_settings ol {
-    margin: 5px 0 0 15px;
-    padding: 0;
-}
-
-/* Checkbox label styling */
 #character_vault_export_settings .checkbox_label {
     display: flex;
     align-items: center;
@@ -35,95 +23,215 @@
     margin: 0;
 }
 
-/* Manual Copy Popup (mobile fallback) */
-.charvault-manual-copy-popup {
-    display: block !important;
-    visibility: visible !important;
+#character_vault_export_settings .charvault-settings-hint {
+    margin-bottom: 6px;
+    opacity: 0.7;
 }
 
-.charvault-manual-copy-popup p {
-    margin-bottom: 10px;
-    opacity: 0.9;
-    font-size: 0.9em;
-}
-
-.charvault-loading-spinner {
+#character_vault_export_settings .charvault-settings-url {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 30px 0;
-    font-size: 1em;
-    opacity: 0.8;
+    gap: 6px;
 }
 
-.charvault-loading-spinner .fa-spinner {
-    font-size: 1.5em;
+#character_vault_export_settings .charvault-settings-url .text_pole {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
 }
 
-.charvault-payload-textarea {
-    width: 100%;
-    min-height: 120px;
-    max-height: 300px;
-    resize: vertical;
-    font-family: monospace;
-    font-size: 0.8em;
-    background-color: var(--SmartThemeBotMesBlurColor, rgba(0,0,0,0.3));
-    color: var(--SmartThemeBotMesColor, #ccc);
-    border: 1px solid var(--SmartThemeBorderColor, #333);
-    border-radius: 4px;
-    padding: 8px;
-    overflow: auto;
-    word-break: break-all;
-    -webkit-user-select: all;
-    user-select: all;
-    display: block;
+#character_vault_export_settings .charvault-settings-url .menu_button {
+    flex-shrink: 0;
+    margin: 0;
 }
 
-.charvault-copy-controls {
+#character_vault_export_settings a {
+    align-self: flex-start;
+    color: var(--SmartThemeQuoteColor, #6464ff);
+}
+
+#character_vault_export_settings ol {
+    margin: 5px 0 0 15px;
+    padding: 0;
+}
+
+/* Off-screen textarea used for execCommand copies */
+.charvault-clipboard-proxy {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+    /* 16px or more stops iOS zooming in when it gets focus */
+    font-size: 16px;
+}
+
+/* Export dialog */
+.charvault-export {
     display: flex;
-    justify-content: center;
-    margin-top: 10px;
-    gap: 10px;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
 }
 
-.charvault-copy-action-btn {
+.charvault-export [hidden] {
+    display: none !important;
+}
+
+.charvault-export-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.charvault-export-avatar {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    object-position: top;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 10px;
+    background-color: var(--black30a);
+}
+
+.charvault-export-heading {
+    min-width: 0;
+}
+
+.charvault-export-title {
+    font-size: 0.85em;
+    opacity: 0.7;
+}
+
+.charvault-export-name {
+    font-size: 1.2em;
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+.charvault-export-status {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    background-color: var(--black30a);
+    font-size: 0.95em;
+}
+
+.charvault-export-status-icon {
+    margin-top: 0.2em;
+}
+
+.charvault-export-status[data-kind="ready"] .charvault-export-status-icon,
+.charvault-export-status[data-kind="success"] .charvault-export-status-icon {
+    color: var(--active, #58b600);
+}
+
+.charvault-export-status[data-kind="warning"] .charvault-export-status-icon {
+    color: var(--golden, #f8d300);
+}
+
+.charvault-export-status[data-kind="error"] .charvault-export-status-icon {
+    color: var(--fullred, #f00);
+}
+
+.charvault-export-facts {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.9em;
+    opacity: 0.85;
+}
+
+.charvault-export-facts li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.charvault-export-facts i {
+    width: 1.2em;
+    text-align: center;
+    opacity: 0.7;
+}
+
+.charvault-export-avatar-toggle {
+    margin: 0;
+}
+
+.charvault-export-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.charvault-export-actions .menu_button {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 8px 16px;
+    width: auto;
+    min-height: 40px;
+    margin: 0;
+    padding: 8px 14px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.charvault-export-primary {
+    flex: 1 1 auto;
+    font-weight: bold;
+}
+
+.charvault-export-primary[aria-disabled="true"],
+.charvault-export-copy:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.charvault-export-manual p {
+    margin: 0 0 6px;
     font-size: 0.9em;
 }
 
-.charvault-copy-status {
-    margin-top: 8px;
-    font-size: 0.85em;
-    min-height: 1.2em;
-    text-align: center;
+.charvault-export-manual textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 110px;
+    max-height: 240px;
+    padding: 8px;
+    resize: vertical;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 6px;
+    background-color: var(--black30a);
+    color: inherit;
+    font-family: var(--monoFontFamily, monospace);
+    font-size: 0.8em;
+    word-break: break-all;
 }
 
-.charvault-copy-status.charvault-copy-success {
-    color: #4caf50;
-}
+/* Phones: stacked, full-width tap targets */
+@media (max-width: 600px) {
+    .charvault-export-actions {
+        flex-direction: column;
+    }
 
-.charvault-copy-status.charvault-copy-fallback {
-    color: #ff9800;
-}
-
-/* Ensure popup is visible on mobile */
-@media (max-width: 768px) {
-    .charvault-manual-copy-popup {
-        max-width: 100%;
+    .charvault-export-actions .menu_button {
         width: 100%;
+        min-height: 44px;
     }
 
-    .charvault-payload-textarea {
-        min-height: 150px;
-        font-size: 0.75em;
-    }
-
-    .charvault-copy-action-btn {
-        padding: 10px 20px;
-        font-size: 1em;
+    .charvault-export-manual textarea {
+        font-size: 16px;
     }
 }
