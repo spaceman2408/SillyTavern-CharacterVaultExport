@@ -1,0 +1,9 @@
+.kilo/
+.vscode/
+.idea/
+.claude/
+.cursor/
+.opencode/
+.kilocode/
+.github/copilot/
+*.code-workspace
